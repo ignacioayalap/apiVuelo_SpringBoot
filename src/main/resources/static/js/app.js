@@ -82,25 +82,24 @@ function setupNavigation() {
 }
 
 function showView(viewName) {
-    // Esconder todas las vistas
     Object.keys(views).forEach(key => {
-        if (views[key]) {
-            views[key].classList.add('d-none');
-        }
+        if (views[key]) views[key].classList.add('d-none');
     });
 
-    // Mostrar vista seleccionada
-    if (views[viewName]) {
-        views[viewName].classList.remove('d-none');
+    if (views[viewName]) views[viewName].classList.remove('d-none');
+
+    const hero = document.getElementById('hero-section');
+    if (hero) {
+        if (viewName === 'flights') hero.classList.remove('d-none');
+        else hero.classList.add('d-none');
     }
 
-    // Actualizar nav active class
     document.getElementById('nav-flights').classList.remove('active');
     document.getElementById('nav-history').classList.remove('active');
-    
+
     if (viewName === 'flights') {
         document.getElementById('nav-flights').classList.add('active');
-        renderFlights(); // Recargar grilla al entrar
+        renderFlights();
     } else if (viewName === 'history') {
         document.getElementById('nav-history').classList.add('active');
         loadHistory();
@@ -255,52 +254,48 @@ function renderFlights() {
         // Render card
         const cardMarkup = `
             <div class="col-12">
-                <div class="glass-card p-4 flight-card">
+                <div class="result-card">
                     <div class="row align-items-center g-3">
                         <div class="col-md-3">
-                            <div class="d-flex align-items-center">
-                                <div class="bg-primary-subtle p-3 rounded-3 text-primary-glow me-3">
-                                    <i class="bi bi-airplane-engines fs-3"></i>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="airline-badge">
+                                    <i class="bi bi-airplane-engines"></i>
                                 </div>
                                 <div>
-                                    <h5 class="text-white fw-bold mb-0">${airline}</h5>
-                                    <small class="text-white-50">Vuelo #${flight.numeroVuelo}</small>
+                                    <h5 class="fw-bold mb-0">${airline}</h5>
+                                    <small class="text-muted">Vuelo #${flight.numeroVuelo}</small>
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Route display -->
                         <div class="col-md-5">
                             <div class="row align-items-center text-center">
                                 <div class="col-5 text-start">
-                                    <h4 class="text-white fw-bold mb-0">${depTime.time}</h4>
-                                    <div class="text-white-50 fw-semibold">${originCity}</div>
+                                    <h4 class="fw-bold mb-0">${depTime.time}</h4>
+                                    <div class="fw-semibold">${originCity}</div>
                                     <small class="text-muted d-block text-truncate" title="${originAirport}">${originAirport}</small>
                                 </div>
                                 <div class="col-2 flight-route">
                                     <div class="flight-route-icon">
-                                        <i class="bi bi-airplane-fill fs-5 text-primary-glow"></i>
+                                        <i class="bi bi-airplane-fill fs-5"></i>
                                     </div>
                                     <div class="flight-dur">${calculateDuration(flight.salida, flight.destino)}</div>
                                 </div>
                                 <div class="col-5 text-end">
-                                    <h4 class="text-white fw-bold mb-0">${arrTime.time}</h4>
-                                    <div class="text-white-50 fw-semibold">${destCity}</div>
+                                    <h4 class="fw-bold mb-0">${arrTime.time}</h4>
+                                    <div class="fw-semibold">${destCity}</div>
                                     <small class="text-muted d-block text-truncate" title="${destAirport}">${destAirport}</small>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Class Prices Selection -->
                         <div class="col-md-4">
                             <div class="d-flex flex-column gap-2">
                                 <div class="row g-2" id="tariff-selectors-${flight.id}">
                                     ${renderTariffs(flight)}
                                 </div>
-                                <button class="btn btn-primary w-100 rounded-pill mt-2 py-2 fw-semibold d-none" 
-                                    id="btn-add-cart-${flight.id}" 
+                                <button class="btn btn-add-cart w-100 mt-2 d-none"
+                                    id="btn-add-cart-${flight.id}"
                                     onclick="addSelectedToCart(${flight.id})">
-                                    <i class="bi bi-cart-plus me-1"></i> Agregar al Carrito
+                                    <i class="bi bi-cart-plus me-1"></i> Reservar
                                 </button>
                             </div>
                         </div>
@@ -314,7 +309,7 @@ function renderFlights() {
 
 function renderTariffs(flight) {
     if (!flight.tarifas || flight.tarifas.length === 0) {
-        return '<div class="col-12 text-center text-white-50 py-2">No hay tarifas cargadas</div>';
+        return '<div class="col-12 text-center text-muted py-2">Sin tarifas disponibles</div>';
     }
 
     return flight.tarifas.map(t => {
@@ -325,8 +320,8 @@ function renderTariffs(flight) {
         return `
             <div class="col-4">
                 <div class="class-price-pill" id="tariff-pill-${t.id}" onclick="selectTariff(${flight.id}, ${t.id}, '${t.claseTarifa}', ${t.precioTarifa}, ${t.impuestoTarifa})">
-                    <small class="text-white-50 d-block">${claseLabel}</small>
-                    <span class="text-white fw-bold">$${t.precioTarifa}</span>
+                    <small>${claseLabel}</small>
+                    <span class="price">$${t.precioTarifa}</span>
                 </div>
             </div>
         `;
@@ -444,19 +439,19 @@ function renderCart() {
         taxes += selectedTariff.impuesto;
 
         const cartItemMarkup = `
-            <div class="glass-card p-4 mb-3">
-                <div class="d-flex justify-content-between align-items-start">
+            <div class="result-card mb-3">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
                     <div>
-                        <span class="badge bg-primary-glow mb-2">${claseLabel}</span>
-                        <h4 class="text-white fw-bold mb-1">${originCity} <i class="bi bi-arrow-right mx-1 text-primary-glow"></i> ${destCity}</h4>
-                        <p class="text-white-50 mb-2">${airline} &bull; Vuelo #${flight.numeroVuelo}</p>
-                        <small class="text-muted"><i class="bi bi-calendar-event me-1"></i>Salida: ${depTime.date} a las ${depTime.time} hs</small>
+                        <span class="badge text-bg-primary mb-2">${claseLabel}</span>
+                        <h4 class="fw-bold mb-1">${originCity} <i class="bi bi-arrow-right mx-1 text-booking"></i> ${destCity}</h4>
+                        <p class="text-muted mb-2">${airline} &bull; Vuelo #${flight.numeroVuelo}</p>
+                        <small class="text-muted"><i class="bi bi-calendar-event me-1"></i>${depTime.date} · ${depTime.time} hs</small>
                     </div>
                     <div class="text-end">
-                        <h4 class="text-primary-glow fw-bold mb-0">$${selectedTariff.precio}</h4>
-                        <small class="text-white-50">+ $${selectedTariff.impuesto} tasas</small>
-                        <button class="btn btn-outline-danger btn-sm rounded-pill mt-3 d-block ms-auto" onclick="removeFromCart(${index})">
-                            <i class="bi bi-trash"></i> Eliminar
+                        <h4 class="fw-bold text-booking mb-0">$${selectedTariff.precio}</h4>
+                        <small class="text-muted">+ $${selectedTariff.impuesto} tasas</small>
+                        <button class="btn btn-outline-danger btn-sm mt-3" onclick="removeFromCart(${index})">
+                            <i class="bi bi-trash"></i> Quitar
                         </button>
                     </div>
                 </div>
@@ -611,17 +606,17 @@ async function loadHistory() {
             const payAmount = res.pago ? res.pago.cantidadPago : 0;
 
             const historyMarkup = `
-                <div class="glass-card p-4">
+                <div class="result-card">
                     <div class="row align-items-center g-3">
                         <div class="col-md-8">
-                            <span class="badge bg-success-subtle text-success border border-success-subtle mb-2 px-2 py-1">Confirmado</span>
-                            <h4 class="text-white fw-bold mb-1">${originCity} <i class="bi bi-arrow-right mx-1 text-primary-glow"></i> ${destCity}</h4>
-                            <p class="text-white-50 mb-2">${airline} &bull; Vuelo #${flight.numeroVuelo} &bull; Reserva #${res.numeroReserva}</p>
-                            <small class="text-muted"><i class="bi bi-calendar-event me-1"></i>Salida: ${depTime.date} a las ${depTime.time} hs</small>
+                            <span class="badge text-bg-success mb-2">Confirmado</span>
+                            <h4 class="fw-bold mb-1">${originCity} <i class="bi bi-arrow-right mx-1"></i> ${destCity}</h4>
+                            <p class="text-muted mb-2">${airline} &bull; Vuelo #${flight.numeroVuelo} &bull; Reserva #${res.numeroReserva}</p>
+                            <small class="text-muted"><i class="bi bi-calendar-event me-1"></i>${depTime.date} · ${depTime.time} hs</small>
                         </div>
                         <div class="col-md-4 text-md-end">
-                            <small class="text-white-50 d-block mb-1">${cardInfo}</small>
-                            <h4 class="text-primary-glow fw-bold">$${payAmount}</h4>
+                            <small class="text-muted d-block mb-1">${cardInfo}</small>
+                            <h4 class="fw-bold text-booking">$${payAmount}</h4>
                         </div>
                     </div>
                 </div>

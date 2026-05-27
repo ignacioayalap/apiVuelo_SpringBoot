@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SkyPass — Reserva vuelos al mejor precio</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <link href="/css/style.css" rel="stylesheet" />
+  </head>
+  <body>
+    <!-- Header estilo Booking -->
+    <header class="site-header">
+      <div class="container">
+        <nav class="navbar navbar-expand-lg py-2">
+          <a class="navbar-brand site-logo" href="#" id="nav-logo">
+            <span class="logo-icon"><i class="bi bi-airplane-fill"></i></span>
+            SkyPass
+          </a>
+
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+
+          <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto gap-1">
+              <li class="nav-item">
+                <a class="nav-link active" href="#" id="nav-flights"><i class="bi bi-airplane me-1"></i>Vuelos</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#" id="nav-history"><i class="bi bi-bag-check me-1"></i>Mis reservas</a>
+              </li>
+            </ul>
+
+            <div class="d-flex align-items-center gap-2 header-actions">
+              <a class="btn btn-link nav-cart-btn position-relative" href="#" id="nav-cart" title="Carrito">
+                <i class="bi bi-cart3 fs-5"></i>
+                <span class="cart-badge d-none" id="cart-count">0</span>
+              </a>
+
+              <div id="auth-buttons" class="d-flex gap-2">
+                <button class="btn btn-outline-booking" id="btn-show-login">Iniciar sesión</button>
+                <button class="btn btn-register" id="link-show-register-header">Registrarse</button>
+              </div>
+
+              <div class="dropdown d-none" id="user-profile">
+                <button class="btn btn-user-menu dropdown-toggle" data-bs-toggle="dropdown" type="button">
+                  <span class="user-avatar" id="user-initials">U</span>
+                  <span class="d-none d-md-inline" id="user-name-display">Usuario</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow">
+                  <li class="px-3 py-2 border-bottom">
+                    <div class="small text-muted">Cuenta</div>
+                    <div class="fw-semibold text-truncate" id="user-email-display">-</div>
+                  </li>
+                  <li><a class="dropdown-item text-danger" href="#" id="btn-logout"><i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Hero + buscador (solo vista vuelos) -->
+    <section class="hero-section" id="hero-section">
+      <div class="hero-overlay"></div>
+      <div class="container hero-content">
+        <h1 class="hero-title">Encuentra tu próximo vuelo</h1>
+        <p class="hero-subtitle">Compará destinos, fechas y tarifas — reservá en minutos</p>
+
+        <div class="search-widget shadow-lg">
+          <div class="search-tabs">
+            <button type="button" class="search-tab active"><i class="bi bi-airplane"></i> Vuelos</button>
+            <button type="button" class="search-tab disabled" disabled><i class="bi bi-building"></i> Hoteles</button>
+            <button type="button" class="search-tab disabled" disabled><i class="bi bi-car-front"></i> Autos</button>
+          </div>
+
+          <form id="filters-form" class="search-form" onsubmit="return false;">
+            <div class="search-field">
+              <label for="filter-origin"><i class="bi bi-geo-alt"></i> Origen</label>
+              <select class="form-select" id="filter-origin"></select>
+            </div>
+            <div class="search-field">
+              <label for="filter-dest"><i class="bi bi-geo-alt-fill"></i> Destino</label>
+              <select class="form-select" id="filter-dest"></select>
+            </div>
+            <div class="search-field">
+              <label for="filter-date"><i class="bi bi-calendar3"></i> Fecha de salida</label>
+              <input class="form-control" type="date" id="filter-date" />
+            </div>
+            <div class="search-actions">
+              <button type="button" class="btn btn-search" onclick="renderFlights()">
+                <i class="bi bi-search me-1"></i> Buscar
+              </button>
+              <button type="button" class="btn btn-clear" id="btn-clear-filters" title="Limpiar filtros">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <main class="main-content">
+      <div class="container">
+        <div class="d-none page-loader" id="flights-loader">
+          <div class="spinner-border text-booking" role="status"></div>
+          <span>Cargando vuelos...</span>
+        </div>
+
+        <!-- Vuelos -->
+        <section id="flights-view">
+          <div class="results-header">
+            <h2 class="results-title">Vuelos disponibles</h2>
+            <p class="results-subtitle text-muted">Seleccioná una tarifa y agregala a tu reserva</p>
+          </div>
+          <div class="row g-3" id="flights-container"></div>
+          <div class="empty-state d-none" id="flights-empty">
+            <i class="bi bi-airplane"></i>
+            <h3>No hay vuelos para mostrar</h3>
+            <p>Probá cambiando origen, destino o fecha de salida.</p>
+          </div>
+        </section>
+
+        <!-- Login -->
+        <section class="d-none page-section" id="login-view">
+          <div class="row justify-content-center">
+            <div class="col-12 col-md-5 col-lg-4">
+              <div class="auth-card shadow-sm">
+                <h2>Iniciar sesión</h2>
+                <p class="text-muted">Accedé a tu cuenta para reservar y ver tu historial</p>
+                <form id="login-form">
+                  <div class="mb-3">
+                    <label class="form-label" for="login-email">Correo electrónico</label>
+                    <input class="form-control" type="email" id="login-email" required />
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label" for="login-password">Contraseña</label>
+                    <input class="form-control" type="password" id="login-password" required />
+                  </div>
+                  <button class="btn btn-search w-100 mb-2" type="submit">Iniciar sesión</button>
+                  <p class="text-center mb-0 small">
+                    ¿No tenés cuenta? <a href="#" id="link-show-register">Registrate gratis</a>
+                  </p>
+                </form>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Registro -->
+        <section class="d-none page-section" id="register-view">
+          <div class="row justify-content-center">
+            <div class="col-12 col-md-8 col-lg-6">
+              <div class="auth-card shadow-sm">
+                <h2>Crear cuenta</h2>
+                <p class="text-muted">Registrate para gestionar reservas y pagos</p>
+                <form id="register-form">
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <label class="form-label" for="reg-nombre">Nombre</label>
+                      <input class="form-control" id="reg-nombre" required />
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label" for="reg-apellido">Apellido</label>
+                      <input class="form-control" id="reg-apellido" required />
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label" for="reg-dni">DNI</label>
+                      <input class="form-control" id="reg-dni" required />
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label" for="reg-numero">Nº de usuario</label>
+                      <input class="form-control" id="reg-numero" required />
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label" for="reg-email">Email</label>
+                      <input class="form-control" type="email" id="reg-email" required />
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label" for="reg-password">Contraseña</label>
+                      <input class="form-control" type="password" id="reg-password" required />
+                    </div>
+                  </div>
+                  <button class="btn btn-search w-100 mt-4 mb-2" type="submit">Crear cuenta</button>
+                  <p class="text-center mb-0 small">
+                    ¿Ya tenés cuenta? <a href="#" id="link-show-login">Iniciar sesión</a>
+                  </p>
+                </form>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Carrito -->
+        <section class="d-none page-section" id="cart-view">
+          <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+            <div>
+              <h2 class="results-title mb-0">Tu reserva</h2>
+              <p class="text-muted mb-0">Revisá los vuelos antes de pagar</p>
+            </div>
+            <button class="btn btn-outline-booking" id="btn-back-to-flights">
+              <i class="bi bi-arrow-left me-1"></i> Seguir buscando
+            </button>
+          </div>
+
+          <div class="empty-state d-none" id="cart-empty">
+            <i class="bi bi-cart3"></i>
+            <h3>Tu carrito está vacío</h3>
+            <p>Agregá vuelos desde la búsqueda para continuar.</p>
+          </div>
+
+          <div class="row g-4">
+            <div class="col-12 col-lg-8" id="cart-item-container"></div>
+            <div class="col-12 col-lg-4">
+              <div class="checkout-card shadow-sm d-none" id="cart-checkout-panel">
+                <h5>Resumen del pago</h5>
+                <div class="summary-row"><span>Subtotal</span><span id="summary-price">$0</span></div>
+                <div class="summary-row"><span>Tasas e impuestos</span><span id="summary-tax">$0</span></div>
+                <div class="summary-row summary-total"><span>Total</span><span id="summary-total">$0</span></div>
+
+                <div class="alert alert-warning small mt-3 d-none" id="auth-checkout-warning">
+                  <a href="#" class="alert-link" id="link-checkout-login">Iniciá sesión</a> para completar el pago.
+                </div>
+
+                <form class="mt-3" id="checkout-form">
+                  <div class="mb-2">
+                    <label class="form-label">Número de tarjeta</label>
+                    <input class="form-control" id="card-number" placeholder="1234 5678 9012 3456" required />
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Tipo de tarjeta</label>
+                    <select class="form-select" id="card-type" required>
+                      <option value="VISA">Visa</option>
+                      <option value="MASTERCARD">Mastercard</option>
+                      <option value="AMEX">American Express</option>
+                    </select>
+                  </div>
+                  <button class="btn btn-search w-100" id="btn-pay" type="submit" disabled>Confirmar y pagar</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Historial -->
+        <section class="d-none page-section" id="history-view">
+          <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+            <div>
+              <h2 class="results-title mb-0">Mis reservas</h2>
+              <p class="text-muted mb-0">Todas tus reservas confirmadas</p>
+            </div>
+            <button class="btn btn-outline-booking" id="btn-history-find-flights">
+              <i class="bi bi-search me-1"></i> Buscar vuelos
+            </button>
+          </div>
+
+          <div class="alert alert-info d-none" id="history-no-auth">
+            <i class="bi bi-person-lock me-2"></i>
+            Necesitás iniciar sesión para ver tu historial.
+            <a href="#" class="alert-link fw-semibold" id="btn-history-login">Iniciar sesión</a>
+          </div>
+
+          <div id="history-content" class="d-none">
+            <div class="page-loader d-none" id="history-loader">
+              <div class="spinner-border text-booking" role="status"></div>
+            </div>
+            <div class="empty-state d-none" id="history-empty">
+              <i class="bi bi-calendar-x"></i>
+              <h3>Aún no tenés reservas</h3>
+              <p>Cuando reserves un vuelo, aparecerá acá.</p>
+            </div>
+            <div class="d-grid gap-3" id="history-list"></div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <div class="row g-4">
+          <div class="col-md-4">
+            <div class="site-logo footer-logo mb-2">
+              <span class="logo-icon"><i class="bi bi-airplane-fill"></i></span>
+              SkyPass
+            </div>
+            <p class="small text-muted mb-0">Tu plataforma de reservas de vuelos. Inspirado en las mejores experiencias de viaje.</p>
+          </div>
+          <div class="col-md-4">
+            <h6 class="footer-heading">Ayuda</h6>
+            <ul class="list-unstyled small text-muted mb-0">
+              <li><a href="#">Preguntas frecuentes</a></li>
+              <li><a href="#">Contacto</a></li>
+              <li><a href="#">Cancelaciones</a></li>
+            </ul>
+          </div>
+          <div class="col-md-4">
+            <h6 class="footer-heading">Legal</h6>
+            <ul class="list-unstyled small text-muted mb-0">
+              <li><a href="#">Términos y condiciones</a></li>
+              <li><a href="#">Privacidad</a></li>
+            </ul>
+          </div>
+        </div>
+        <hr class="my-4" />
+        <p class="small text-muted text-center mb-0">&copy; 2026 SkyPass. Todos los derechos reservados.</p>
+      </div>
+    </footer>
+
+    <div class="position-fixed bottom-0 end-0 p-3 toast-container">
+      <div id="app-toast" class="toast align-items-center border-0" role="alert">
+        <div class="d-flex">
+          <div class="toast-body" id="toast-message">-</div>
+          <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+      document.getElementById('link-show-register-header')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        showView('register');
+      });
+    </script>
+  </body>
+</html>
